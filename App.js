@@ -22,7 +22,8 @@ const App = () => {
       <Tabs.Navigator
         screenOptions={{
           tabBarStyle: {
-            backgroundColor: Colors.blackPearl
+            backgroundColor: Colors.blackPearl,
+            borderTopWidth: 0
           },
           headerShown: false
         }}
