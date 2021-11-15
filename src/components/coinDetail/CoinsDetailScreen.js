@@ -1,14 +1,16 @@
 import React, { Component } from "react";
-import { View, Text, Image, StyleSheet, SectionList, FlatList } from 'react-native';
+import { View, Text, Image, StyleSheet, SectionList, FlatList, Pressable, Alert } from 'react-native';
 import Colors from '../../res/colors'
 import Http from '../../libs/http'
 import CoinMarketItem from "./CoinMarketItem";
+import Storage from "../../libs/storage";
 
 class CoinDetailScreen extends Component {
 
     state = {
         coin: {},
-        markets: []
+        markets: [],
+        isFavorite: false
     }
 
     componentDidMount() {
@@ -19,7 +21,9 @@ class CoinDetailScreen extends Component {
 
         this.getMarkets(coin.id);
 
-        this.setState({ coin })
+        this.setState({ coin }, () => {
+            this.getFavorite();
+        })
     }
 
     getSymbolIcon = nameStr => {
@@ -59,15 +63,88 @@ class CoinDetailScreen extends Component {
         this.setState({ markets });
     }
 
+    toggleFavorite = () => {
+        if (this.state.isFavorite) {
+            this.removeFavorite();
+        } else {
+            this.addFavorite();
+        }
+    }
+
+    addFavorite = async () => {
+        const coin = JSON.stringify(this.state.coin);
+        const key = `favorite-coin-${this.state.coin.id}`;
+
+        const stored = await Storage.instance.store(key, coin);
+
+        if (stored) {
+            this.setState({ isFavorite: true });
+        }
+    }
+
+    getFavorite = async () => {
+
+        try {
+            const key = `favorite-coin-${this.state.coin.id}`;
+
+            const favStr = await Storage.instance.get(key);
+
+            if (favStr != null) {
+                this.setState({ isFavorite: true })
+            }
+
+        } catch (error) {
+            console.log("get favorites error: ", error);
+        }
+
+    }
+
+    removeFavorite = async () => {
+
+        Alert.alert("Remove favorite", "Are you sure?", [
+            {
+                text: "Cancel",
+                style: "cancel",
+                onPress: () => {}
+            },
+            {
+                text: "Remove",
+                style: "destructive",
+                onPress: async () => {
+                    const key = `favorite-coin-${this.state.coin.id}`;
+
+                    await Storage.instance.remove(key);
+
+                    this.setState({ isFavorite: false });
+                }
+            }
+        ])
+        
+    }
+
     render() {
 
-        const { coin, markets } = this.state;
+        const { coin, markets, isFavorite } = this.state;
 
         return (
             <View style={styles.container}>
                 <View style={styles.subHeader}>
-                    <Image style={styles.iconImg} source={{ uri: this.getSymbolIcon(coin.name)}} />
-                    <Text style={styles.titleText}>{coin.name}</Text>
+                    <View style={[styles.row, styles.coinBaseWrapper]}>
+                        <Image style={styles.iconImg} source={{ uri: this.getSymbolIcon(coin.name)}} />
+                        <Text style={styles.titleText}>{coin.name}</Text>
+                    </View>
+
+                    <Pressable
+                        onPress={this.toggleFavorite}
+                        style={[
+                            styles.btnFavorite,
+                            isFavorite ?
+                            styles.btnFavoriteRemove :
+                            styles.btnFavoriteAdd,
+                        ]
+                    }>
+                        <Text style={styles.btnFavoriteText}>{isFavorite ? "Remove favorite" : "Add favorite"}</Text>
+                    </Pressable>
                 </View>
                 <SectionList
                     style={styles.section}
@@ -106,6 +183,13 @@ const styles = StyleSheet.create({
         backgroundColor: "rgba(0,0,0,0.1)",
         padding: 16,
         flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between"
+    },
+    row: {
+        flexDirection: "row"
+    },
+    coinBaseWrapper:{
         alignItems: "center"
     },
     titleText: {
@@ -148,6 +232,19 @@ const styles = StyleSheet.create({
         color: Colors.white,
         fontSize: 14,
         fontWeight: "bold"
+    },
+    btnFavoriteText: {
+        color: Colors.white
+    },
+    btnFavorite: {
+        padding: 8,
+        borderRadius: 8,
+    },
+    btnFavoriteAdd: {
+        backgroundColor: Colors.picton,
+    },
+    btnFavoriteRemove: {
+        backgroundColor: Colors.carmine,
     }
 })
 

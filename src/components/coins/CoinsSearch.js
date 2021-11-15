@@ -31,7 +31,7 @@ class CoinSearch extends Component {
                     ]}
                     onChangeText={this.handleText}
                     value={query}
-                    placeholder={"Search coin"}
+                    placeholder={"Search Coin..."}
                     placeholderTextColor="#fff"
                 />
             </View>
