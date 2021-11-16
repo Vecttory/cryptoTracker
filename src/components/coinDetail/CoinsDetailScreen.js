@@ -44,7 +44,7 @@ class CoinDetailScreen extends Component {
             },
             {
                 title: "Volume 24h",
-                data: [coin.volume24, "hello Vetto"]
+                data: [coin.volume24]
             },
             {
                 title: "Change 24h",
